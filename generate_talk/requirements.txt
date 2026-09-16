@@ -1,1 +1,5 @@
-torch
+# conda env: llms (python 3.12)
+# install:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+torch==2.14.0+cu130
+tiktoken
