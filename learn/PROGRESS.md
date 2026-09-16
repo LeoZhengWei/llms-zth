@@ -4,7 +4,11 @@
 
 ## 当前阶段
 
-计划课 **L01**（S0 环境与栈）。完整课表：`learn/PLAN.md`。毕业标准：`learn/GOALS.md`。
+L01、L02 已过关。下一课 **L03：fused QKV 重构并对拍**（详见 `learn/PLAN.md`）。毕业标准：`learn/GOALS.md`。
+
+## 会话日志
+
+- 09-16：L01 过关（KV cache 优先，口试答对）。L02 补全 GPT 并修 4 个 bug（Embeding 拼写、modules.bias、targets=None 未定义、单头 head_size 用了 config.head_size），形状断言 (2,16,50257) 通过，loss 10.86。下一课 L03。
 
 ## 毕业（L20 才勾）
 
@@ -14,8 +18,8 @@
 
 ## 主干检查点
 
-- [ ] S0 能区分：KV cache / ONNX / TRT / GGML / vLLM 各解决什么
-- [ ] S1 `GPT.forward` 形状正确
+- [x] S0 能区分：KV cache / ONNX / TRT / GGML / vLLM 各解决什么
+- [x] S1 `GPT.forward` 形状正确
 - [ ] S2 `checkpoint.pt`，greedy 可采样
 - [ ] S3 naive vs KV：token 一致，TPOT 下降
 - [ ] S4 基线表（硬件、prompt、TTFT、TPOT）
