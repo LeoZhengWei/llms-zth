@@ -11,7 +11,7 @@ class GPTConfig:
     dropout: float = 0.1
     vocab_size: int = 50257
     learning_rate: float = 3e-4
-    max_epochs: int = 2
+    max_epochs: int = 5
 
     def __post_init__(self):
         if self.n_embd % self.n_head != 0:

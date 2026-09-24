@@ -38,10 +38,17 @@ def evaluate(model, loader, device):
 
 def main():
     config = GPTConfig()
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.cuda.is_available():
+        target_idx = 1 if torch.cuda.device_count() > 1 else 0
+        device = torch.device(f"cuda:{target_idx}")
+        torch.cuda.set_device(device)
+        print(f"Using CUDA device: {device} -> {torch.cuda.get_device_name(target_idx)}")
+    else:
+        device = torch.device("cpu")
+        print("Using CPU device")
     os.makedirs("checkpoints", exist_ok=True)
 
-    dataset = TextDataset(path="data/train.jsonl", block_size=config.block_size, max_lines=2000)
+    dataset = TextDataset(path="data/train.jsonl", block_size=config.block_size, max_lines=None)
     train_size = int(0.9 * len(dataset))
     val_size = len(dataset) - train_size
     train_ds, val_ds = random_split(dataset, [train_size, val_size])
