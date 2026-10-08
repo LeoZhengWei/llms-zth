@@ -1,0 +1,19 @@
+# 数据与模型产物：体积大、可由 prepare_data.py / train.py 重建，不入库
+gpt/data/*.jsonl
+gpt/data/*.jsonl.*
+gpt/data/DATASET.md
+gpt/checkpoints/
+*.pt
+*.onnx
+*.engine
+*.gguf
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 下载缓存 / 临时文件
+.cache/
+*.tmp
