@@ -34,10 +34,11 @@ class TextDataset(Dataset):
         for text in raw_data:
             full_encoded.extend(self.encoder.encode(text) + [self.eos_token])
 
+        # 按照blocksize来进行分块，不足blocksize就补充eos_token到blocksize
         for i in range(0, len(full_encoded), self.block_size):
             chunk = full_encoded[i : i + self.block_size + 1]
             if len(chunk) < self.block_size + 1:
-                chunk = chunk + [self.eos_token] * (self.block_size + 1 - len(chunk))
+                chunk = chunk + [self.eos_token] * (self.block_size + 1 - len(chunk)) 
             self.encoded_data.append(chunk)
 
     def __len__(self):

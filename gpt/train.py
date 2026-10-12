@@ -71,6 +71,7 @@ def main():
             "model_state_dict": model.state_dict(),
             "config": config,
             "val_loss": val_loss,
+            "tokenizer": "gpt2",
         }
         torch.save(checkpoint, f"checkpoints/model_epoch_{epoch}.pt")
 
