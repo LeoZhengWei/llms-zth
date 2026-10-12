@@ -1,10 +1,10 @@
 # 学习进度
 
-最后更新：2026-10-10 · L06 过关
+最后更新：2026-10-12 · L07 过关
 
 ## 当前阶段
 
-L01–L06 已过关。下一课 **L07：S3 naive 解码**（详见 `learn/PLAN.md`）。毕业标准：`learn/GOALS.md`。
+L01–L07 已过关。下一课 **L08：S3 KV cache**（详见 `learn/PLAN.md`）。毕业标准：`learn/GOALS.md`。
 
 ## 会话日志
 
@@ -13,6 +13,7 @@ L01–L06 已过关。下一课 **L07：S3 naive 解码**（详见 `learn/PLAN.m
 - 10-09：L04 过关。`peek_dateset.py` 取出 batch，`x/y` 形状一致，`shift ok? True`；理解移位是 next-token 监督对齐，不是位置编码。语料已有 `train.jsonl`/`val.jsonl`。下一课 L05。
 - 10-10：L05 过关。`cuda:1` RTX 5090；train_loss 1.0445→0.1584，val_loss 0.1807→0.1629（5 epoch）。ckpt：`gpt/checkpoints/model_epoch_4.pt`。配置仍为默认 6L/768d/512ctx/batch12。下一课 L06。
 - 10-10：L06 过关。`generate.py --greedy` 可读中文 + 对话格式碎片（「我觉得这个问题要辩证地看」/ `<|用户|>`）。`checkpoint.pt` 含 `tokenizer=gpt2`。注意：导出脚本误用了 `model_epoch_0.pt`（val 0.1807），应改成 `model_epoch_4.pt` 再导出。下一课 L07。
+- 10-12：L07 过关。`infer_pt/generate.py` 每步整段重算，`logits[:, -1, :].argmax` greedy 出 16 token（`new_tokens: 16`，text「关于房价物价，�」）。ckpt 已是 epoch 4，`val_loss=0.1629`。下一课 L08。
 
 ## 毕业（L20 才勾）
 
@@ -42,7 +43,7 @@ L01–L06 已过关。下一课 **L07：S3 naive 解码**（详见 `learn/PLAN.m
 
 - 定义：`gpt/model/`（`attention.py` / `block.py` / `gpt.py`）
 - 配置：6L / 12H / 768d / block 512 / vocab 50257 / batch 12（L05 实跑）
-- checkpoint：`gpt/checkpoints/checkpoint.pt`（`tokenizer=gpt2`）；当前误拷自 epoch 0，应改为 `model_epoch_4.pt`
+- checkpoint：`gpt/checkpoints/checkpoint.pt`（epoch 4，`val_loss=0.1629`，`tokenizer=gpt2`）
 - ONNX / engine / ggml：尚无
 
 ## 基线表
