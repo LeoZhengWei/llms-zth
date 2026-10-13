@@ -12,7 +12,7 @@ class Block(nn.Module):
         self.ln1 = nn.LayerNorm(config.n_embd)
         self.ln2 = nn.LayerNorm(config.n_embd)
 
-    def forward(self, x):
+    def forward(self, x, kv_cache=None, use_cache=False):
         x = x + self.att(self.ln1(x))
         x = x + self.ffn(self.ln2(x))
         return x

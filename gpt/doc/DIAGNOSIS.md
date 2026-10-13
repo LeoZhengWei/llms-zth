@@ -3,7 +3,7 @@
 针对这条命令的输出做的分析：
 
 ```bash
-python sample.py --device cuda:1 --prompt "今天去哪里玩" --max-new-tokens 32
+python sample/sample.py --device cuda:1 --prompt "今天去哪里玩" --max-new-tokens 32
 ```
 
 ```
@@ -82,10 +82,10 @@ len=13  decode='今天去哪里玩'   ← 完整才无损
 实测（你的原 prompt，同一个 `model_epoch_4.pt`）：
 
 ```bash
-python generate.py --device cuda:1 --prompt "今天去哪里玩" --max-new-tokens 32
+python sample/generate.py --device cuda:1 --prompt "今天去哪里玩" --max-new-tokens 32
 #  Generated: 求助！急！在线等！
 
-python generate.py --device cuda:1 --prompt "今天去哪里玩" --max-new-tokens 40 --greedy
+python sample/generate.py --device cuda:1 --prompt "今天去哪里玩" --max-new-tokens 40 --greedy
 #  Generated: 其实社交聚会因人而异，这个方法效果很好
 ```
 
@@ -161,8 +161,8 @@ Generated (48 tokens) = 其实社交聚会因人而异，这个方法效果很�
 `dedup_data.py` 对**含高频发言的对话**做降采样（而不是删掉高频句，那会毁掉组合多样性）：
 
 ```bash
-python dedup_data.py --report                      # 只体检
-python dedup_data.py --max-utterance-freq 200 --keep-ratio 0.35   # 生成降采样版
+python data/dedup_data.py --report                      # 只体检
+python data/dedup_data.py --max-utterance-freq 200 --keep-ratio 0.35   # 生成降采样版
 ```
 
 实测效果：
@@ -228,7 +228,7 @@ L06 的过关标准原文是「能生成非乱码文本（过拟合语料上应�
 1. **先修采样脚本** —— 用 `generate.py` 替代 `sample.py`。这一步立刻解决 `�`，
    不涉及重新训练：
    ```bash
-   python generate.py --device cuda:1 --prompt "今天去哪里玩" --greedy
+   python sample/generate.py --device cuda:1 --prompt "今天去哪里玩" --greedy
    ```
 2. **别被 `val_loss=0.16` 骗了** —— 用生成质量判断，不要只看 loss。
 3. **想继续用 HANA** —— 试试降采样版：
@@ -241,8 +241,8 @@ L06 的过关标准原文是「能生成非乱码文本（过拟合语料上应�
 
 | 文件 | 说明 |
 |---|---|
-| `gpt/generate.py` | **新增**。修正版生成脚本，解决 `�`、分布外 prompt、采样策略、解码范围四个问题 |
-| `gpt/dedup_data.py` | **新增**。语料模板化体检 + 降采样 |
+| `gpt/sample/generate.py` | 修正版生成脚本，解决 `�`、分布外 prompt、采样策略、解码范围四个问题 |
+| `gpt/data/dedup_data.py` | 语料模板化体检 + 降采样 |
 | `gpt/data/train.dedup.jsonl` | **新增**。降采样版训练集（33,909 行） |
 | `gpt/data/val.dedup.jsonl` | **新增**。降采样版验证集 |
 | `gpt/data/DATASET.md` | 待补：应加上「重复率 85.6%」这一质量指标 |

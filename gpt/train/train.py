@@ -1,7 +1,11 @@
-import os
+import sys
+from pathlib import Path
 
 import torch
 from torch.utils.data import DataLoader, random_split
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from config import GPTConfig
 from data.dataset import TextDataset
@@ -46,9 +50,14 @@ def main():
     else:
         device = torch.device("cpu")
         print("Using CPU device")
-    os.makedirs("checkpoints", exist_ok=True)
+    ckpt_dir = ROOT / "checkpoints"
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
 
-    dataset = TextDataset(path="data/train.jsonl", block_size=config.block_size, max_lines=None)
+    dataset = TextDataset(
+        path=str(ROOT / "data" / "train.jsonl"),
+        block_size=config.block_size,
+        max_lines=None,
+    )
     train_size = int(0.9 * len(dataset))
     val_size = len(dataset) - train_size
     train_ds, val_ds = random_split(dataset, [train_size, val_size])
@@ -73,7 +82,7 @@ def main():
             "val_loss": val_loss,
             "tokenizer": "gpt2",
         }
-        torch.save(checkpoint, f"checkpoints/model_epoch_{epoch}.pt")
+        torch.save(checkpoint, ckpt_dir / f"model_epoch_{epoch}.pt")
 
 
 if __name__ == "__main__":

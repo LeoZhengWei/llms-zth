@@ -28,9 +28,13 @@ generate.py —— 从训练好的 checkpoint 生成文本（修正版）
 import argparse
 import glob
 import sys
+from pathlib import Path
 
 import torch
 import tiktoken
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from config import GPTConfig
 from model.gpt import GPT
@@ -38,7 +42,8 @@ from model.gpt import GPT
 REPLACEMENT = "\ufffd"
 
 
-def find_latest_checkpoint(checkpoint_dir: str = "checkpoints") -> str:
+def find_latest_checkpoint(checkpoint_dir: str | None = None) -> str:
+    checkpoint_dir = checkpoint_dir or str(ROOT / "checkpoints")
     candidates = sorted(
         glob.glob(f"{checkpoint_dir}/model_epoch_*.pt"),
         key=lambda p: int(p.rsplit("_", 1)[-1].split(".")[0]),

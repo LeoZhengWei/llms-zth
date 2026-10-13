@@ -26,7 +26,7 @@ class MultiHeadAttention(nn.Module):
             torch.tril(torch.ones(config.block_size, config.block_size)),
         )
 
-    def forward(self, x):
+    def forward(self, x, kv_cache=None, use_cache=False):
         B, T, C = x.size()
 
         qkv = self.c_attn(x) # (B, T, 3C)        # (B, T, 3C)

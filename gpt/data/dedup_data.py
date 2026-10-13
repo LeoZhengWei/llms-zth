@@ -34,8 +34,10 @@ HANA 的 100,000 条对话是从一个**固定回复池**里组合生成的：
 import argparse
 import json
 import random
-import sys
 from collections import Counter
+from pathlib import Path
+
+DATA_DIR = Path(__file__).resolve().parent
 
 USER_TAG = "<|用户|>"
 ASSISTANT_TAG = "<|助手|>"
@@ -63,10 +65,10 @@ def report(convs, title):
 
 def main():
     ap = argparse.ArgumentParser(description="对模板化中文对话语料做降采样去重")
-    ap.add_argument("--train", default="data/train.jsonl")
-    ap.add_argument("--val", default="data/val.jsonl")
-    ap.add_argument("--out-train", default="data/train.dedup.jsonl")
-    ap.add_argument("--out-val", default="data/val.dedup.jsonl")
+    ap.add_argument("--train", default=str(DATA_DIR / "train.jsonl"))
+    ap.add_argument("--val", default=str(DATA_DIR / "val.jsonl"))
+    ap.add_argument("--out-train", default=str(DATA_DIR / "train.dedup.jsonl"))
+    ap.add_argument("--out-val", default=str(DATA_DIR / "val.dedup.jsonl"))
     ap.add_argument("--max-utterance-freq", type=int, default=200,
                     help="出现次数超过该值的发言所在对话会被降采样（0=关闭）")
     ap.add_argument("--keep-ratio", type=float, default=0.35,
@@ -130,7 +132,7 @@ def main():
     print(f"\n  写出 {args.out_train}  ({len(kept):,} 行, {n_chars:,} 字符)")
     if val:
         print(f"  写出 {args.out_val}  ({len(val):,} 行)")
-    print("\n  用法：把 train.py 里的 path 改成 data/train.dedup.jsonl 即可。")
+    print("\n  用法：把 train/train.py 里的 path 改成 data/train.dedup.jsonl 即可。")
 
 
 if __name__ == "__main__":

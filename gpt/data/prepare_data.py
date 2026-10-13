@@ -7,7 +7,7 @@ prepare_data.py —— 为 llms-zth 的 GPT 训练准备中文语料
     xuanxixue/HANA  «HANA 中文闲聊对话数据集»
     100 个 batch × 1000 条 = 100,000 条中文多轮对话，约 6.2M 汉字
 
-输出（相对仓库根目录）：
+输出（与本脚本同目录）：
     gpt/data/train.jsonl      训练集，每行一条 {"text": "..."}
     gpt/data/val.jsonl        验证集（默认 5% 对话）
     gpt/data/DATASET.md       数据卡片（来源、规模、校验和、重建命令）
@@ -103,9 +103,10 @@ def render_dialogue(d: dict, sep_user: str, sep_assistant: str, sep_eos: str) ->
 
 
 def main():
-    here = os.path.dirname(os.path.abspath(__file__))
-    repo_root = os.path.dirname(here)              # gpt/ 的上一级 = 仓库根
-    default_out = os.path.join(repo_root, "gpt", "data")
+    here = os.path.dirname(os.path.abspath(__file__))  # gpt/data
+    gpt_root = os.path.dirname(here)
+    repo_root = os.path.dirname(gpt_root)
+    default_out = here
 
     ap = argparse.ArgumentParser(description="为 llms-zth 准备 HANA 中文对话语料")
     ap.add_argument("--out-dir", default=default_out, help="输出目录（默认 gpt/data）")
@@ -207,13 +208,13 @@ def main():
 
     card = f"""# 数据集卡片：{DATASET_ID}
 
-本文件由 `gpt/prepare_data.py` 自动生成，记录 `gpt/data/*.jsonl` 的来源与规模。
+本文件由 `gpt/data/prepare_data.py` 自动生成，记录 `gpt/data/*.jsonl` 的来源与规模。
 
 ## 来源
 
 - 平台：ModelScope 魔搭（开源，无需登录）
 - 数据集：`{DATASET_ID}` —「HANA 中文闲聊对话数据集」
-- 下载：`~/anaconda3/envs/llms-zth/bin/python gpt/prepare_data.py`
+- 下载：`~/anaconda3/envs/llms-zth/bin/python gpt/data/prepare_data.py`
 - 原始形态：100 个 `batches/batch_XXX.json`，共 100,000 条多轮对话，约 6.2M 汉字，压缩后约 107 MB
 
 ## 本地产物
@@ -241,14 +242,14 @@ def main():
 ```bash
 cd ~/zw/llms-zth
 rm -f gpt/data/train.jsonl gpt/data/val.jsonl
-~/anaconda3/envs/llms-zth/bin/python gpt/prepare_data.py
+~/anaconda3/envs/llms-zth/bin/python gpt/data/prepare_data.py
 ```
 
 ## 备注
 
 - 文本未做分词，交给 `tiktoken` 的 **gpt2** 词表在训练时现场编码。
 - gpt2 词表以英文为主，中文约 **2.1 tokens / 汉字**，所以 6.2M 汉字 ≈ **13M tokens**。
-  这是「小模型学中文」的正常代价；本仓库的 GPT-2 类词表不可能换成中文词表（尺寸写死在 `config.py` 的 `vocab_size`）。
+  这是「小模型学中文」的正常代价；本仓库的 GPT-2 类词表不可能换成中文词表（尺寸写死在 `gpt/config/config.py` 的 `vocab_size`）。
 - 语料量足以让 `block_size=512` 的模型过拟合出可辨认的中文，符合 L05/L06 的过关标准。
 """
     card_path = os.path.join(args.out_dir, "DATASET.md")

@@ -1,14 +1,20 @@
 import argparse
 import glob
+import sys
+from pathlib import Path
 
 import torch
 import tiktoken
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 from config import GPTConfig
 from model.gpt import GPT
 
 
-def find_latest_checkpoint(checkpoint_dir: str = "checkpoints") -> str:
+def find_latest_checkpoint(checkpoint_dir: str | None = None) -> str:
+    checkpoint_dir = checkpoint_dir or str(ROOT / "checkpoints")
     candidates = sorted(glob.glob(f"{checkpoint_dir}/model_epoch_*.pt"))
     if not candidates:
         raise FileNotFoundError(f"No checkpoint found in {checkpoint_dir}")

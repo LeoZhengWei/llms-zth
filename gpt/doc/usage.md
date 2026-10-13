@@ -17,7 +17,7 @@
 | 默认模型 | 6 层 / 768 维 / 12 头 / `block_size=512` / 词表 50257 → **约 1.39 亿参数** |
 | 实测耗时 | 默认配置下 `max_lines=2000` 一个 epoch 约 **10 秒** |
 
-> **词表提醒**：`config.py` 里 `vocab_size = 50257` 是写死的，用的是 **gpt2 词表**
+> **词表提醒**：`config/config.py` 里 `vocab_size = 50257` 是写死的，用的是 **gpt2 词表**
 > （英文为主）。中文在这个词表下约 **2.1 tokens/汉字**，所以 948 万汉字放大到 1660 万 tokens。
 > 这是本仓库的既定设计，不要在 L04–L06 阶段试图换成中文词表。
 
@@ -70,7 +70,7 @@ wc -l gpt/data/train.jsonl gpt/data/val.jsonl
 ```bash
 cd ~/zw/llms-zth
 rm -f gpt/data/train.jsonl gpt/data/val.jsonl
-~/anaconda3/envs/llms-zth/bin/python gpt/prepare_data.py
+~/anaconda3/envs/llms-zth/bin/python gpt/data/prepare_data.py
 ```
 
 脚本会自动从 ModelScope 下载（约 107 MB，缓存在 `/tmp/ms-hana-cache`）、渲染、切分、写盘，
@@ -78,16 +78,16 @@ rm -f gpt/data/train.jsonl gpt/data/val.jsonl
 
 ```bash
 # 只要 10000 条对话，快速试跑
-~/anaconda3/envs/llms-zth/bin/python gpt/prepare_data.py --max-dialogues 10000
+~/anaconda3/envs/llms-zth/bin/python gpt/data/prepare_data.py --max-dialogues 10000
 
 # 换掉对话前缀标记
-~/anaconda3/envs/llms-zth/bin/python gpt/prepare_data.py --sep-user "问：" --sep-assistant "答："
+~/anaconda3/envs/llms-zth/bin/python gpt/data/prepare_data.py --sep-user "问：" --sep-assistant "答："
 
 # 改验证集比例与随机种子
-~/anaconda3/envs/llms-zth/bin/python gpt/prepare_data.py --val-ratio 0.02 --seed 42
+~/anaconda3/envs/llms-zth/bin/python gpt/data/prepare_data.py --val-ratio 0.02 --seed 42
 
 # 覆盖已有文件
-~/anaconda3/envs/llms-zth/bin/python gpt/prepare_data.py --force
+~/anaconda3/envs/llms-zth/bin/python gpt/data/prepare_data.py --force
 ```
 
 ### 2.3 数据格式（关键）
@@ -116,8 +116,8 @@ rm -f gpt/data/train.jsonl gpt/data/val.jsonl
 ## 3. 训练
 
 ```bash
-cd ~/zw/llms-zth/gpt         # 必须在 gpt/ 下运行：代码用的是相对路径 data/train.jsonl
-~/anaconda3/envs/llms-zth/bin/python train.py
+cd ~/zw/llms-zth/gpt
+~/anaconda3/envs/llms-zth/bin/python train/train.py
 ```
 
 **实测输出**（`max_lines=2000`、`max_epochs=2`，约 10 秒 / epoch）：
@@ -132,22 +132,23 @@ epoch=1 train_loss=1.9xxx val_loss=2.0xxx
 
 ### 3.1 先想清楚 `max_lines` 这个坑
 
-`train.py` 第 44 行写死了 **`max_lines=2000`**：
+`train/train.py` 里数据集这一行：
 
 ```python
-dataset = TextDataset(path="data/train.jsonl", block_size=config.block_size, max_lines=2000)
+dataset = TextDataset(
+    path=str(ROOT / "data" / "train.jsonl"),
+    block_size=config.block_size,
+    max_lines=None,
+)
 ```
 
-含义是**只用前 2000 行对话**（约 690 个 block / 12 万 tokens）。
-这是 L05 刻意的设计：**目标是「loss 明显下降」，不是复现 GPT-2**。
-好处是 10 秒一轮，改代码→看结果的循环极快。
-
-想用全量 95,000 行，就把 `max_lines=2000` 改成 `max_lines=None`
-（此时约 32,499 个 block / 1660 万 tokens，一轮大概几分钟到十几分钟，取决于配置）。
+`ROOT` 是 `gpt/` 目录，数据路径不再依赖当前工作目录。
+当前 `max_lines=None` 表示用全量对话。L05 曾把它写成 `2000`，只取前 2000 行
+（约 690 个 block），方便 10 秒一轮看 loss 是否下降。要回到那种快循环，把 `None` 改回 `2000`。
 
 ### 3.2 显存不够或想加速时
 
-`config.py` 是唯一的旋钮：
+`config/config.py` 是唯一的旋钮：
 
 ```python
 block_size    = 512      # 上下文长度
@@ -174,12 +175,12 @@ n_embd     = 256
 
 ### 3.3 选哪张卡
 
-`train.py` 用 `torch.cuda.is_available()`，**默认落在 GPU 0（RTX 4090）**。
+`train/train.py` 用 `torch.cuda.is_available()`，多卡时选 `cuda:1`。
 想指定用卡，在命令前加环境变量：
 
 ```bash
 # 用第二张卡（RTX 5090 32G）
-CUDA_VISIBLE_DEVICES=1 ~/anaconda3/envs/llms-zth/bin/python train.py
+CUDA_VISIBLE_DEVICES=1 ~/anaconda3/envs/llms-zth/bin/python train/train.py
 
 # 观察占用
 nvidia-smi
@@ -192,7 +193,7 @@ watch -n 1 nvidia-smi      # 实时看
 
 ```bash
 cd ~/zw/llms-zth/gpt
-nohup ~/anaconda3/envs/llms-zth/bin/python train.py > train.log 2>&1 &
+nohup ~/anaconda3/envs/llms-zth/bin/python train/train.py > train.log 2>&1 &
 tail -f train.log          # 看进度
 ```
 
@@ -200,15 +201,15 @@ tail -f train.log          # 看进度
 
 ## 4. 采样验证
 
-`sample.py` 从 `checkpoints/model_epoch_0.pt` 加载并生成。**训练至少要跑完 1 个 epoch**，
+`sample/sample.py` 从 `checkpoints/` 里最新的 `model_epoch_*.pt` 加载并生成。**训练至少要跑完 1 个 epoch**，
 否则这个文件不存在。
 
 ```bash
 cd ~/zw/llms-zth/gpt
-~/anaconda3/envs/llms-zth/bin/python sample.py
+~/anaconda3/envs/llms-zth/bin/python sample/sample.py
 ```
 
-当前 `sample.py` 存在的问题（L06 的动手内容）：
+`sample/sample.py` 在 L06 时的问题（现已改过，记录留在这里）：
 
 1. **prompt 是写死的 token id** `[[1, 2, 3, 4]]`，不是中文；
 2. 用的是 `torch.multinomial`（随机采样），而 L06 要的是 **greedy**；
@@ -256,13 +257,13 @@ PY
 |---|---|
 | `ModuleNotFoundError: No module named 'torch'` | 用了系统 `python3`。必须用 `~/anaconda3/envs/llms-zth/bin/python` |
 | `ModuleNotFoundError: No module named 'numpy'` | 环境缺 numpy：`~/anaconda3/envs/llms-zth/bin/pip install numpy` |
-| `FileNotFoundError: data/train.jsonl` | 工作目录不对，必须在 `gpt/` 下运行 |
+| `FileNotFoundError: .../data/train.jsonl` | 语料不在 `gpt/data/`，先跑 `data/prepare_data.py` |
 | `ImportError: tiktoken is required` | `pip install tiktoken` |
 | `ValueError: n_embd must be divisible by n_head` | 改配置时没注意整除关系 |
 | `json.decoder.JSONDecodeError` 刷屏 | `train.jsonl` 某行不是合法单行 JSON；`dataset.py` 会静默 `continue` 跳过，不会报错，表现为 dataset 变短 |
 | 训练 OOM | 降 `batch_size` 或 `block_size` |
 | 中文全变成 `\u4f60\u597d` | 写数据时漏了 `ensure_ascii=False` |
-| `checkpoints/model_epoch_0.pt` 找不到 | 还没训练过，先跑 `train.py` |
+| `checkpoints/model_epoch_0.pt` 找不到 | 还没训练过，先跑 `train/train.py` |
 
 ### 数据自检一行命令
 
@@ -290,14 +291,18 @@ PY
 
 | 路径 | 说明 |
 |---|---|
-| `gpt/prepare_data.py` | 数据准备脚本（下载 → 渲染 → 切分 → 写盘 → 自检 → 出数据卡片） |
+| `gpt/data/prepare_data.py` | 数据准备脚本（下载 → 渲染 → 切分 → 写盘 → 自检 → 出数据卡片） |
+| `gpt/data/dedup_data.py` | 语料模板化体检与降采样 |
 | `gpt/data/train.jsonl` | 训练集，95,000 行 |
 | `gpt/data/val.jsonl` | 验证集，5,000 行 |
 | `gpt/data/DATASET.md` | 数据卡片：来源、规模、SHA-256、重建命令 |
 | `gpt/data/dataset.py` | `TextDataset`：滑窗切 block、`x=chunk[:-1]` / `y=chunk[1:]` |
-| `gpt/config.py` | 全部超参 |
-| `gpt/train.py` | 训练入口 |
-| `gpt/sample.py` | 采样入口（L06 要改） |
+| `gpt/config/config.py` | 全部超参（`from config import GPTConfig`） |
+| `gpt/train/train.py` | 训练入口 |
+| `gpt/sample/sample.py` | 采样入口 |
+| `gpt/sample/generate.py` | 中文对话采样（top-k / greedy） |
+| `gpt/infer_pt/` | naive / KV 解码基线 |
+| `gpt/doc/` | 使用说明与诊断笔记 |
 | `gpt/checkpoints/` | 权重产物（约 556 MB / 个） |
 | `.gitignore` | 已忽略 `*.jsonl` / `checkpoints/` / 权重文件 |
 

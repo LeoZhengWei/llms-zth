@@ -27,7 +27,7 @@ class GPT(nn.Module):
         elif isinstance(module, nn.Embedding):
             nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
-    def forward(self, idx, targets=None):
+    def forward(self, idx, targets=None, kv_cache=None, use_cache=False):
         batch, seq_len = idx.size()
         if seq_len > self.block_size:
             raise ValueError(f"seq_len {seq_len} > block_size {self.block_size}")
